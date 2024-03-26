@@ -7,6 +7,7 @@
                         reading: true,
                         bubbleMenu: false,
                         floatingMenu: false,
+                        loadBareHtml: true,
                         onResizeEnd: onResizeEnd,
                         uploadServer: {
                           url: '/api/v1/question/upload/620e09bd2079aa7c1b00cf8d',
@@ -34,8 +35,11 @@
 
 <script>
 import 'katex/dist/katex.min.css'
-import mixinConvertToTiptap from 'vue-tiptap-katex-core/mixins/convertToTiptap.mjs'
-import VueTiptapKatex from './vue3-tiptap-katex.vue'
+import * as VueTiptapKatexAssist from 'vue-tiptap-katex-core/assist.js'
+// import VueTiptapKatex from './vue3-tiptap-katex.vue'
+import VueTiptapKatex from './vue3-tiptap-katex-no-ssr.vue'
+
+// const VueTiptapKatexAssist = {}
 
 export default {
   name: 'TestPage',
@@ -61,7 +65,7 @@ export default {
       if (string === null || typeof string === 'undefined') {
         return ''
       }
-      string = mixinConvertToTiptap.methods.renderKatexToHTML(string)
+      string = VueTiptapKatexAssist.renderKatexToHTML(string)
       return string
     },
   }

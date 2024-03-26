@@ -21,16 +21,17 @@
          }">
       <span class="mdi mdi-drag"
             :style="{ top: node.attrs.vertical + 'px', height: node.attrs.height + 'px' }" />
-      <vue-drag-resize :w="naturalWidth"
-                       :h="naturalHeight"
-                       :aspect-ratio="true"
-                       :sticks="['br']"
-                       axis="y"
-                       :y="node.attrs.vertical"
-                       @resizestop="resizeEnd"
-                       @dragstop="dragEnd">
-        <img :src="node.attrs.url">
-      </vue-drag-resize>
+      <img :src="node.attrs.url">
+      <!--      <vue-drag-resize :w="naturalWidth"-->
+      <!--                       :h="naturalHeight"-->
+      <!--                       :aspect-ratio="true"-->
+      <!--                       :sticks="['br']"-->
+      <!--                       axis="y"-->
+      <!--                       :y="node.attrs.vertical"-->
+      <!--                       @resizestop="resizeEnd"-->
+      <!--                       @dragstop="dragEnd">-->
+      <!--        <img :src="node.attrs.url">-->
+      <!--      </vue-drag-resize>-->
     </div>
   </node-view-wrapper>
 </template>
@@ -42,7 +43,7 @@ import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
 
-import MixinComponentImageUpload from 'vue-tiptap-katex-core/components/ImageUpload/mixin.js'
+import { MixinComponentImageUpload } from 'vue-tiptap-katex-core'
 
 import { NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3'
 import { defineAsyncComponent } from 'vue'

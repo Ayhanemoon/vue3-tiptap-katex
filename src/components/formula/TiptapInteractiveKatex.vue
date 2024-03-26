@@ -16,25 +16,23 @@
       <div v-if="editMode"
            id="mathfield"
            ref="mathfield"
-           dir="ltr"
-           :class="{ 'editable': editMode }" />
+           class="editable"
+           dir="ltr" />
+      <div v-if="editMode"
+           @click="toggleEdit">
+        <span class="mdi mdi-check" />
+      </div>
       <div v-if="!editMode"
            class="converted"
            dir="ltr"
            @click="editMode = true"
            v-html="computedKatex" />
-      <div v-if="editMode"
-           icon
-           color="green"
-           @click="toggleEdit">
-        <span class="mdi mdi-check" />
-      </div>
     </template>
   </node-view-wrapper>
 </template>
 
 <script>
-import MixinComponentFormula from 'vue-tiptap-katex-core/components/formula/mixin.mjs'
+import { MixinComponentFormula } from 'vue-tiptap-katex-core'
 
 import 'katex/dist/katex.min.css'
 // eslint-disable-next-line no-unused-vars

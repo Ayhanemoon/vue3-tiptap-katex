@@ -36,23 +36,28 @@
 
 <script>
 import toolbar from 'vue-tiptap-katex-core/components/toolbar/toolbar.vue'
-import Focus from '@tiptap/extension-focus'
 import SlotBubbleMenu from 'vue-tiptap-katex-core/components/SlotBubbleMenu.vue'
 import SlotFloatingMenu from 'vue-tiptap-katex-core/components/SlotFloatingMenu.vue'
+import Link from '@tiptap/extension-link'
+import Focus from '@tiptap/extension-focus'
 import StarterKit from '@tiptap/starter-kit'
 import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
-import TableCell from 'vue-tiptap-katex-core/extension/table.js'
 import TextAlign from '@tiptap/extension-text-align'
-import TextDirection from 'vue-tiptap-katex-core/extension/tiptap-text-direction-extension/index.mjs'
 import Highlight from '@tiptap/extension-highlight'
 import Underline from '@tiptap/extension-underline'
 import { Color } from '@tiptap/extension-color'
 import TextStyle from '@tiptap/extension-text-style'
-import Shortkeys from 'vue-tiptap-katex-core/extension/Shortkeys/TiptapShortkeys.mjs'
+import * as VueTiptapKatexAssist from 'vue-tiptap-katex-core/assist.js'
+
+import {
+  ExtensionTiptapShortkeys,
+  ExtensionThinSpace,
+  ExtensionTextDirection,
+  ExtensionTableCell
+} from 'vue-tiptap-katex-core'
 import { DOMParser } from 'prosemirror-model'
 // import Focus from '@tiptap/extension-focus'
-import ThinSpace from 'vue-tiptap-katex-core/extension/ThinSpace/ThinSpace.mjs'
 // import Paper from './Drawing/Paper.js'
 
 import {
@@ -62,13 +67,16 @@ import {
   FloatingMenu
 } from '@tiptap/vue-3'
 
-import mixinConvertToTiptap from 'vue-tiptap-katex-core/mixins/convertToTiptap.mjs'
 import mesra from './components/poem/mesra.mjs'
 import TiptapInteractiveReading from './components/reading/extension.mjs'
 import TiptapInteractivePoem from './components/poem/bait.mjs'
 import TiptapInteractiveImageUploadInline from './components/ImageUpload/extensionImageInline.mjs'
+import TiptapInteractiveVideoUploadInline from './components/VideoUpload/extensionVideoInline.mjs'
+import TiptapInteractiveAudioUploadInline from './components/AudioUpload/extensionAudioUploadInline.mjs'
+import TiptapInteractiveInsertScriptInline from './components/InsertScript/extensionInsertScriptInline.mjs'
 import TiptapInteractiveKatexInline from './components/formula/extensionFormulaInline.mjs'
 import EditTableModal from './components/EditTableModal.vue'
+
 // import {EditorView} from "prosemirror-view";
 // import {EditorState} from "prosemirror-state";
 // import {posToDOMRect} from "@tiptap/core";
@@ -84,11 +92,14 @@ export default {
     SlotBubbleMenu,
     SlotFloatingMenu
   },
-  mixins: [mixinConvertToTiptap],
   props: {
     uploadServer: {
       type: Object,
       default: () => {}
+    },
+    uploadVideo: {
+      type: Function,
+      default: null
     },
     loading: {
       type: Boolean,
@@ -124,33 +135,38 @@ export default {
         poem: false,
         reading: false,
         persianKeyboard: false,
+        loadBareHtml: false,
         mathliveOptions: {},
         onResizeEnd: null
       }
       Object.assign(options, this.options)
       return options
-    }
-  },
-  watch: {
-    modelValue(newContent) {
-      if (this.newModelValue === newContent) {
-        return
+    },
+    localModelValue: {
+      get () {
+        return this.modelValue
+      },
+      set (newValue) {
+        if (this.newModelValue === newValue) {
+          return
+        }
+        this.$emit('update:modelValue', newValue)
       }
-      this.setContent(newContent)
     }
   },
-  created() {
-    this.newModelValue = this.convertToTiptap(this.modelValue)
-    this.$emit('update:modelValue', this.convertToTiptap(this.modelValue))
+  beforeMount () {
+    this.newModelValue = VueTiptapKatexAssist.convertToTiptap(this.localModelValue)
+    this.localModelValue = VueTiptapKatexAssist.convertToTiptap(this.modelValue)
   },
-  mounted() {
+  mounted () {
     const vueTiptapKatexInstance = this
     const editorConfig = {
-      content: this.modelValue,
+      content: this.localModelValue,
       parseOptions: {
         preserveWhitespace: true
       },
       extensions: [
+        Link.configure({ openOnClick: false }),
         Focus.configure({
           className: 'has-focus',
           mode: 'all'
@@ -170,7 +186,7 @@ export default {
         TextStyle,
         Document,
         Text,
-        TextDirection,
+        ExtensionTextDirection,
         Highlight.configure({
           multicolor: true
         }),
@@ -185,20 +201,23 @@ export default {
         TableRow.extend({
           content: 'tableCell*'
         }),
-        TableCell,
+        ExtensionTableCell,
         TiptapInteractiveKatexInline,
         TiptapInteractiveImageUploadInline,
+        TiptapInteractiveVideoUploadInline,
+        TiptapInteractiveAudioUploadInline,
+        TiptapInteractiveInsertScriptInline,
         TiptapInteractivePoem,
         mesra,
         TiptapInteractiveReading,
-        Shortkeys,
-        ThinSpace
+        ExtensionTiptapShortkeys,
+        ExtensionThinSpace
       ],
       // triggered on every change
       onUpdate({ editor }) {
-        vueTiptapKatexInstance.$emit('update:modelValue', editor.getHTML())
-        vueTiptapKatexInstance.newModelValue = vueTiptapKatexInstance
-          .convertToTiptap(editor.getHTML())
+        const htmlContent = this.editorOptions.loadBareHtml ? VueTiptapKatexAssist.convertBareHtml(editor.getHTML()) : editor.getHTML()
+        vueTiptapKatexInstance.localModelValue = htmlContent
+        vueTiptapKatexInstance.newModelValue = VueTiptapKatexAssist.convertToTiptap(htmlContent)
       },
       editorProps: {
         handleKeyDown: (view, event) => {
@@ -215,6 +234,9 @@ export default {
     this.editor.editorOptions = this.editorOptions
   },
   beforeUnmount() {
+    if (!this.editor) {
+      return
+    }
     this.editor.destroy()
   },
   methods: {
@@ -274,10 +296,12 @@ export default {
       view.dispatch(trx)
     },
     setContent(pureHTML) {
-      const string = this.convertToTiptap(pureHTML)
+      const string = VueTiptapKatexAssist.convertToTiptap(pureHTML)
+      // const oldanchor = this.editor.state.tr.selection.anchor
       if (string.length) {
         this.editor.commands.setContent(string)
       }
+      // this.editor.commands.focus(oldanchor)
     },
     getContent() {
       return this.editor.getHTML()
